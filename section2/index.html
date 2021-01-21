@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ES6에서의 순회와 이터러블: 이터레이터 프로토콜</title>
+    <script>
+      const log = console.log;
+      const clear = console.clear;
+    </script>
+  </head>
+  <body>
+    <div>
+      <h1>기존과 달라진 ES6에서의 리스트 순회</h1>
+      <ul>
+        <li>for i++</li>
+        <li>for of</li>
+      </ul>
+
+      <script>
+        // es5의 방식
+        // 1. 리스트의 경우
+        const list = [1, 2, 3];
+        for (var i = 0; i < list.length; i++) {
+          log(list[i]);
+        }
+        // 2. 유사배열의 경우
+        const str = "abc";
+        for (var i = 0; i < str.length; i++) {
+          log(str[i]);
+        }
+
+        // es6: 더 간결하고 선언적
+        for (const a of list) {
+          log(a);
+        }
+        for (const a of str) {
+          log(a);
+        }
+      </script>
+    </div>
+
+    <div>
+      <h1>Array, Set, Map을 통해 알아보는 이터러블/이터레이터 프로토콜</h1>
+      <ul>
+        <li>이터러블: 이터레이터를 리턴하는 [Symbol.iterator]() 를 가진 값</li>
+        <li>이터레이터: {value, done} 객체를 리턴하는 next()를 가진 값</li>
+        <li>
+          이터러블/이터레이터 프로토콜: 이터러블을 for...of, 전개 연산자 등과
+          함께 동작하도록한 규약
+        </li>
+        <li>이터레이터 객체의 Symbol.iterator 값은 자기자신이다</li>
+        <li>Array Set Map은 JavaScript의 내장 이터러블이다.</li>
+      </ul>
+      <script>
+        clear();
+        // Array를 통해 알아보기
+        log("Arr -----------");
+        const arr = [1, 2, 3];
+        // for (const a of arr) log(a);
+        let iter1 = arr[Symbol.iterator]();
+        log(iter1.next());
+
+        // Set를 통해 알아보기, set[i] 이렇게 조회를 할 수 없다
+        log("Set -----------");
+        const set = new Set([1, 2, 3]);
+        // for (const a of set) log(a);
+        let iter2 = set[Symbol.iterator]();
+        log(iter2.next());
+
+        // Map를 통해 알아보기, map[i] 이렇게 조회를 할 수 없다
+        log("Map -----------");
+        const map = new Map([
+          ["key1", 1],
+          ["key2", 2],
+          ["key3", 3],
+        ]);
+        // for (const a of map) log(a);
+        let iter3 = map[Symbol.iterator]();
+        // log(iter3.next());
+        // 이 네가지 모두 map의 interator이다
+        log(iter3, map.keys(), map.values(), map.entries());
+
+        // map의 경우, map.keys(), map.values(), map.entries() 가 모두 iterator를 반환한다
+        for (const a of map.keys()) log(a);
+        for (const a of map.values()) log(a);
+        for (const a of map.entries()) log(a);
+
+        clear();
+        // Symbol.iterator란? 키로 사용될 수 있다.
+        // log(arr[Symbol.iterator]);
+        // log(set[Symbol.iterator]);
+        // log(map[Symbol.iterator]);
+
+        // map.values()는 iterator 객체를 반환한다.
+        // 이때 map.values()또한 Symbol.iterator를 가지고 있는데, 이건 자기자신을 가리킨다.
+        let it = map.values();
+        let it2 = it[Symbol.iterator]();
+        log(it2.next(), it2.next());
+
+        // 그렇기때문에 기존 for(const a of map) 을 내부적으로 이터레이터를 통해처리를 하는데,
+        // map.values(), map.keys() 처럼 이미 interator를 넘겨줘도
+        // map.values[Symbol.iterator]는 자기자신을 가리키므로 정상적으로 동작하는 것이다.
+
+        // Symbol.iterator 값을 가진 이터러블 객체는
+        // object[Symbol.iterator]를 통해 이터레이터에 접근할 수 있다.
+        // 이 이터레이터는 {value, done} 객체를 리턴해준다.
+        // 이터러블/ 이터레이터 프로토콜은 이러한 이터러블 객체가 for...of, 전개연산자와 함께 어떤게 동작할지를 정의해놓은 것이다.
+
+        let iterator = arr[Symbol.iterator]();
+
+        clear();
+      </script>
+    </div>
+
+    <div>
+      <h1>사용자 정의 이터러블을 통해 알아보기</h1>
+      <ul>
+        <li>
+          iterable 객체는 Symbol.iterator를 가지고 있어야하고, 이안에는 next
+          메소드가 구현이 되어 있어야 한다
+        </li>
+        <li>
+          잘구현된 이터러블의 경우(well-formed iterable), 이터레이터의
+          이터레이터로도 순회할 수 있어야한다.
+        </li>
+        <li>
+          잘구현된 이터러블의 경우, 일부는 먼저 조회한후 나머지만 순회할 수도
+          있어야한다.
+        </li>
+        <li>많은 순회가 가능한 라이브러리 등등은 이 형태를 따르고 있다.</li>
+      </ul>
+      <script>
+        const iterable = {
+          [Symbol.iterator]() {
+            let i = 3;
+            return {
+              next() {
+                return i == 0 ? { done: true } : { value: i--, done: false };
+              },
+              [Symbol.iterator]() {
+                return this;
+              }, // 이터레이터의 이터레이터는 자기자신, 이터레이터도 이터러블하게
+            };
+          },
+        };
+
+        let customIter = iterable[Symbol.iterator]();
+        // log(customIter.next());
+        // log(customIter.next());
+        // log(customIter.next());
+        // log(customIter.next());
+        // for (const a of iterable) log(a);
+        // well formed iterable
+        log(customIter.next());
+        for (const a of customIter) log(a);
+
+        // 잘되는 이터레이터인 array
+        const arr2 = [1, 2, 3];
+        let citer2 = arr2[Symbol.iterator]();
+        // log("out", citer2.next());
+        // log(citer2[Symbol.iterator]() == citer2);
+        // for (const a of citer2) log(a);
+
+        clear();
+
+        for (const a of document.querySelectorAll("*")) log(a);
+
+        const all = document.querySelectorAll("*");
+        let allIter = all[Symbol.iterator]();
+        log(allIter.next());
+        log(allIter.next());
+        log(allIter.next());
+        clear();
+      </script>
+    </div>
+
+    <div>
+      <h1>전개 연산자</h1>
+      <ul>
+        <li>Iterable 속성을 이용한 연산</li>
+      </ul>
+      <script>
+        clear();
+        const a = [1, 2];
+        // a[Symbol.iterator] = null;
+        log([...a, ...[3, 4, 5]]);
+        log([...a, ...all, ...set, ...map]);
+      </script>
+    </div>
+  </body>
+</html>
