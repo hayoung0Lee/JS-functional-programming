@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script src="../utils.js"></script>
+    <script>
+      const log = console.log;
+      const clear = console.clear;
+    </script>
+  </head>
+  <body>
+    <div>
+      <h1>평가</h1>
+      <ul>
+        <li>코드가 계산(Evalutaiton)되어 값을 만드는 것</li>
+      </ul>
+    </div>
+
+    <div>
+      <h1>일급</h1>
+      <ul>
+        <li>값으로 다룰 수 있다</li>
+        <li>변수에 담을 수 있다</li>
+        <li>함수의 인자로 사용될 수 있다</li>
+        <li>함수의 결과로 사용될 수 있다</li>
+      </ul>
+    </div>
+
+    <div>
+      <h1>일급 함수</h1>
+      <ul>
+        <li>함수를 값으로 다룰 수 있다</li>
+        <li>조합성과 추상화의 도구</li>
+      </ul>
+    </div>
+
+    <div>
+      <h1>고차 함수</h1>
+      <ul>
+        <li>함수를 값으로 다루는 함수</li>
+      </ul>
+    </div>
+
+    <script>
+      //   const draw = drawConsole("consolePanel");
+      //   draw(123);
+      const a = 10;
+      const add10 = (a) => a + 10;
+      const r = add10(a);
+      log(r);
+
+      // JavaScript에서는 함수는 인자가 될수있다. 값도 된다
+      const add5 = (a) => a + 5;
+      log(add5);
+      log(add5(6));
+
+      // JavaScript에서는 함수가 함수를 반환할 수 있다.
+      const f1 = () => () => 1;
+      log(f1());
+
+      // 그리고 값을 담을수도 있다.
+      const f2 = f1();
+      log(f2);
+      log(f2(2));
+    </script>
+
+    <div>
+      <h1>함수를 인자로 받아서 실행하는 함수</h1>
+      <ul>
+        <li>apply1</li>
+        <li>times</li>
+      </ul>
+      <script>
+        clear();
+        const apply1 = (f) => f(1);
+        const add2 = (a) => a + 2;
+        log(apply1(add2));
+
+        const times = (f, n) => {
+          let i = -1;
+          while (++i < n) f(i);
+        };
+
+        times(log, 3);
+
+        times((a) => log(a + 10), 3);
+      </script>
+    </div>
+
+    <div>
+      <h1>함수를 만들어 리턴하는 함수(클로저를 만들어 리턴하는 함수)</h1>
+      <ul>
+        <li>addMaker</li>
+      </ul>
+      <script>
+        const addMaker = (a) => (b) => a + b;
+        const add10_v2 = addMaker(10);
+        log(add10_v2(4));
+      </script>
+    </div>
+
+    <!-- <div>
+      <h1>콘솔 값들</h1>
+      <div class="consolePanel"></div>
+    </div> -->
+  </body>
+</html>
