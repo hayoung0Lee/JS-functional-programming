@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script>
+      const log = console.log;
+      const clear = console.clear;
+    </script>
+  </head>
+  <body>
+    <div>
+      <h1>제너레이터/이터레이터</h1>
+      <ul>
+        <li>제너레이터: 이터레이터이자 이터러블을 생성하는 함수</li>
+        <li>제너레이터의 실행 결과가 이터레이터이자 이터러블</li>
+        <li>iter[Symbol.iterator] 값을 가지고 있는 이터러블</li>
+        <li>실향하면 next()로 값을 반환하는 이터레이터</li>
+        <li>
+          자바스크립트에서 어떠한 값이라도 순회할 수 있는값으로 만들 수 있다는
+          것!
+        </li>
+      </ul>
+      <script>
+        function* gen() {
+          yield 1;
+          yield 2;
+          yield 3;
+          return 100; // done일때 나오는 값, for of 순회에선 출력이 안된다
+        }
+        let iter = gen();
+        log(iter.next());
+        log(iter.next());
+        log(iter.next());
+        log(iter.next());
+
+        for (const a of gen()) log(a);
+      </script>
+    </div>
+    <div>
+      <h1>odds</h1>
+      <ul>
+        <li>홀수만 만들어서 순회하는 이터레이터</li>
+      </ul>
+      <script>
+        function* odds() {
+          let num = -1;
+          while (true) {
+            num += 2;
+            yield num;
+          }
+        }
+
+        let iter2 = odds();
+        log(iter2.next());
+        log(iter2.next());
+        log(iter2.next());
+        log(iter2.next());
+        log(iter2.next());
+
+        function* infinity(i = 0) {
+          while (true) yield i++;
+        }
+
+        function* limit(l, iter) {
+          for (const a of iter) {
+            yield a;
+            if (a === l) return;
+          }
+        }
+
+        function* odds2(l) {
+          // for (const a of infinity(1)) {
+          //   if (a % 2) yield a;
+          //   if (a === l) return;
+          // }
+
+          // limit을 활용
+          for (const a of limit(l, infinity(1))) {
+            if (a % 2) yield a;
+          }
+
+          // for (let i = 0; i <= l; i++) {
+          //   if (i % 2) yield i;
+          // }
+        }
+
+        for (const a of odds2(30)) {
+          log(a);
+        }
+        let iter3 = odds2(10);
+        log(iter3.next());
+        log(iter3.next());
+        log(iter3.next());
+        log(iter3.next());
+        log(iter3.next());
+      </script>
+    </div>
+    <div>
+      <h1>for of, 전개 연산자, 구조 분해, 나머지 연산자</h1>
+      <ul>
+        <li>
+          <a
+            href="https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment"
+          >
+            구조분해:
+          </a>
+        </li>
+      </ul>
+      <script>
+        log(...odds2(10));
+        log([...odds2(10), ...odds2(20)]);
+        const [head, ...tail] = odds2(5);
+        log(head, tail);
+
+        const [a, b, ...rest] = odds2(10);
+        log(a, b, rest);
+      </script>
+    </div>
+  </body>
+</html>
