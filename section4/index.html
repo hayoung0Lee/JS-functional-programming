@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script>
+      const log = console.log;
+      const clear = console.clear;
+    </script>
+    <script>
+      const products = [
+        { name: "반팔티", price: 15000 },
+        { name: "긴팔티", price: 20000 },
+        { name: "핸드폰케이스", price: 15000 },
+        { name: "후드티", price: 30000 },
+        { name: "바지", price: 25000 },
+      ];
+    </script>
+  </head>
+  <body>
+    <div>
+      <h1>map</h1>
+      <ul>
+        <li>어떤 함수를 각각에 적용하는 함수</li>
+        <li>
+          함수형 프로그래밍은 인자가 리턴값으로 외부세상과 소통하기를 원한다
+        </li>
+        <li>map은 고차함수이기도 하다</li>
+      </ul>
+      <script>
+        const map = (f, iter) => {
+          let res = [];
+          for (const a of iter) {
+            res.push(f(a));
+          }
+          return res;
+        };
+
+        log(map((p) => p.name, products));
+        log(map((p) => p.price, products));
+
+        // let names = [];
+        // for (const p of products) {
+        //   names.push(p.name);
+        // }
+        // log(names);
+
+        // let prices = [];
+        // for (const p of products) {
+        //   prices.push(p.price);
+        // }
+        // log(prices);
+      </script>
+    </div>
+    <div>
+      <h1>이터러블 프로토콜을 따른 map의 다형성</h1>
+      <ul>
+        <li>
+          document.querySelectorAll("*") 처럼 map 함수가 없는 이터러블도 map
+          할수 있게 된다
+        </li>
+        <li>제너레이터도 map 할수있게 된다</li>
+        <li>
+          즉, 이터러블이나, 제너레이터의 결과에 대해서도 map을 할 수 있게 된다
+        </li>
+      </ul>
+      <script>
+        log([1, 2, 3].map((a) => a + 1));
+        const diter = document.querySelectorAll("*")[Symbol.iterator]();
+        console.log(diter.next());
+
+        log(map((el) => el.nodeName, document.querySelectorAll("*")));
+
+        function* gen() {
+          yield 3;
+          yield 5;
+          yield 8;
+        }
+
+        log(map((el) => el, gen()));
+
+        let m = new Map();
+        m.set("a", 10);
+        m.set("b", 20);
+        const mit = m[Symbol.iterator]();
+        log(mit.next());
+
+        log(new Map(map(([k, a]) => [k, a * 2], m)));
+      </script>
+    </div>
+    <div>
+      <h1>filter</h1>
+      <ul>
+        <li>어떤 기준에 대해서 걸러내는 함수</li>
+      </ul>
+      <script>
+        const filter = (fn, iter) => {
+          let res = [];
+          for (const a of iter) {
+            if (fn(a)) res.push(a);
+          }
+          return res;
+        };
+
+        log(filter((p) => p.price < 20000, products));
+        log(filter((p) => p.price >= 20000, products));
+
+        log(filter((n) => n % 2, gen()));
+        // let under20000 = [];
+        // for (const p of products) {
+        //   if (p.price < 20000) under20000.push(p);
+        // }
+        // log(...under20000);
+
+        // let over20000 = [];
+        // for (const p of products) {
+        //   if (p.price >= 20000) over20000.push(p);
+        // }
+        // log(...over20000);
+      </script>
+    </div>
+    <div>
+      <h1>reduce</h1>
+      <ul>
+        <li>값을 축약해서 하나로 만드는 것</li>
+        <li>
+          ex) const nums = [1,2,3,4,5]; 이런 값을 전체 다 더해서 하나의 값으로
+          만들기
+        </li>
+        <li>
+          const add = (a, b) => a + b; 함수가 있다고 치면 <br />
+          const nums = [1, 2, 3, 4, 5]; 에 대해서 <br />
+          log(add(add(add(add(add(0, 1, 1), 2), 3), 4), 5)); <br />
+          를 해서 히나의 값으로 만들길 원하는 것
+        </li>
+      </ul>
+      <script>
+        const nums = [1, 2, 3, 4, 5];
+        const reduce = (fn, acc, iter) => {
+          if (!iter) {
+            iter = acc[Symbol.iterator]();
+            acc = iter.next().value;
+          }
+          for (const n of iter) {
+            acc = fn(acc, n);
+          }
+          return acc;
+        };
+
+        const add = (a, b) => a + b;
+        // log(reduce(add, 0, nums)); ->
+        // log(add(add(add(add(add(0, 1, 1), 2), 3), 4), 5));
+        log(reduce(add, 0, nums));
+
+        log(reduce(add, nums));
+
+        // products의 price를 다 합치는 경우
+        log(
+          reduce(
+            (total_price, product) => total_price + parseInt(product.price),
+            0,
+            products
+          )
+        );
+        // let total = 0;
+        // for (const n of nums) {
+        //   total = total + n;
+        // }
+        // log(total);
+      </script>
+
+      <script></script>
+    </div>
+  </body>
+</html>
