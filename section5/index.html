@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script>
+      const log = console.log;
+      const clear = console.clear;
+    </script>
+  </head>
+  <body>
+    <script src="../utils.js"></script>
+    <div>
+      <h1>코드를 값으로 다루어 표현력 높이기</h1>
+      <ul>
+        <li>
+          go: 앞에서부터 순서대로 실행되길 기대함 <br />
+          <br />
+          go(0, a=>a+1, a=> a+10, a=>a+100, log); <br />
+          <br />
+          reduce를 활용 <br />
+          <br />
+          함수들로 즉시 어떤 값을 구하는 용
+        </li>
+        <li>
+          pipe: 함수들이 나열되어있는 합성된 함수를 만드는 함수 <br />
+          <br />
+          const f = pipe(a => a+1, a=> a+10, a=> a+100); <br />
+          <br />
+          를 통해서 함수를 합성하는 것을 기대 <br />
+          <br />
+          함수를 리턴함 <br />
+          <br />
+          내부에서는 go를 사용한다
+        </li>
+        <li>
+          curry: 함수를 값으로 받아두고, 원하는 시점에 실행하는 함수<br /><br />
+          인자가 원하는 만큼 들어왔을때 실행하는 것
+        </li>
+      </ul>
+      <script>
+        // go
+        const go = (...args) => reduce((a, f) => f(a), args);
+        const r = go(
+          0,
+          (a) => a + 1,
+          (a) => a + 10,
+          (a) => a + 100,
+          log
+        );
+
+        // pipe
+        const pipe = (f, ...fs) => {
+          // 첫번째 인자는 여러개 받을 수도 있다고 가정
+          return (...as) => go(f(...as), ...fs);
+        };
+        const f = pipe(
+          (a) => a + 1,
+          (a) => a + 10,
+          (a) => a + 100
+        );
+        log(f(10));
+
+        const f2 = pipe(
+          (a, b) => a + b,
+          (a) => a + 10,
+          (a) => a + 100
+        );
+        log(f2(0, 1));
+        // curry
+      </script>
+
+      <script>
+        const products = [
+          { name: "반팔티", price: 15000 },
+          { name: "긴팔티", price: 20000 },
+          { name: "핸드폰케이스", price: 15000 },
+          { name: "후드티", price: 30000 },
+          { name: "바지", price: 25000 },
+        ];
+
+        const add = (a, b) => a + b;
+
+        // let result = reduce(
+        //   add,
+        //   // 0,
+        //   map(
+        //     (p) => p.price,
+        //     filter((p) => p.price < 20000, products)
+        //   )
+        // );
+        go(
+          products,
+          (products) => filter((p) => p.price < 20000, products),
+          (products) => map((p) => p.price, products),
+          (prices) => reduce(add, prices),
+          log
+        );
+
+        // let result2 = reduce(
+        //   add,
+        //   // 0,
+        //   filter(
+        //     (n) => n >= 20000,
+        //     map((p) => p.price, products)
+        //   )
+        // );
+
+        go(
+          products,
+          (products) => map((p) => p.price, products),
+          (prices) => filter((n) => n >= 20000, prices),
+          (prices) => reduce(add, prices),
+          log
+        );
+
+        // log(result2);
+
+        // curry
+        // const curry = (f) =>
+        // (a, ..._) => _.length ? f(a, ..._) : (..._) => f(a, ..._); // 함수를 받아서 함수를 리턴
+        // 이렇게 리턴한 함수가 실행될때 인자가 두개이상이면 바로 실행
+        // 아니면 다시 함수를 반환
+
+        // const curry = (f) => (a, ..._) =>
+        // _.length ? f(a, ..._) : (..._) => f(a, ..._);
+
+        const mult = curry((a, b) => a * b);
+        // log(mult(2)(9));
+
+        // cmap, cfilter, creduce는 일단 인자를 하나만 받고나면, 그다음에 오는 입력을 기다림
+        go(
+          products,
+          cfilter((n) => n.price >= 20000),
+          cmap((p) => p.price),
+          creduce(add),
+          log
+        );
+
+        go(
+          products,
+          cfilter((n) => n.price < 20000),
+          cmap((p) => p.price),
+          creduce(add),
+          log
+        );
+
+        // 함수 조합으로 함수 만들기
+        // 위의 두 go함수에
+        // cmap((p) => p.price),
+        // creduce(add), 가 같다
+
+        const pickPriceAndAdd = pipe(
+          cmap((p) => p.price),
+          creduce(add)
+        );
+
+        go(
+          products,
+          cfilter((n) => n.price >= 20000),
+          pickPriceAndAdd,
+          log
+        );
+
+        go(
+          products,
+          cfilter((n) => n.price < 20000),
+          pickPriceAndAdd,
+          log
+        );
+
+        const base_total_price = (predi) =>
+          pipe(cfilter(predi), pickPriceAndAdd);
+
+        go(
+          products,
+          base_total_price((n) => n.price >= 20000),
+          log
+        );
+
+        go(
+          products,
+          base_total_price((n) => n.price < 20000),
+          log
+        );
+      </script>
+    </div>
+  </body>
+</html>
