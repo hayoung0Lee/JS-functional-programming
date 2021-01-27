@@ -132,7 +132,7 @@
         // cmap, cfilter, creduce는 일단 인자를 하나만 받고나면, 그다음에 오는 입력을 기다림
         go(
           products,
-          cfilter((n) => n.price >= 20000),
+          (products) => cfilter((n) => n.price >= 20000)(products),
           cmap((p) => p.price),
           creduce(add),
           log
