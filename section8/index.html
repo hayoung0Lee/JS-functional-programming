@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script>
+      const log = console.log;
+      const clear = console.clear;
+    </script>
+    <script src="../utils.js"></script>
+  </head>
+  <body>
+    <div>
+      <h1>결과를 만드는 함수 reduce, take</h1>
+      <ul>
+        <li>take를 한시점에 몇개의원소를 가져올지 결과를 만든다</li>
+      </ul>
+      <script></script>
+    </div>
+
+    <div>
+      <h1>reduce</h1>
+      <ul>
+        <li>객체를 통해서 쿼리 스트링을 만드는함수</li>
+      </ul>
+      <script>
+        // const queryStr = (obj) =>
+        //   go(
+        //     obj,
+        //     Object.entries,
+        //     map(([k, v]) => `${k}=${v}`),
+        //     reduce((a, b) => `${a}&${b}`)
+        //   );
+        const queryStr = pipe(
+          Object.entries,
+          map(([k, v]) => `${k}=${v}`),
+          reduce((a, b) => `${a}&${b}`)
+        );
+
+        // log(queryStr({ limit: 10, offset: 10, type: "notice" }));
+
+        function* a() {
+          yield 10;
+          yield 11;
+          yield 12;
+          yield 13;
+        }
+
+        // log(join(" - ", a()));
+        // log(join()(a()));
+
+        // log(
+        //   join("**")(Object.entries({ limit: 10, offset: 10, type: "notice" }))
+        // );
+
+        const queryStr2 = pipe(
+          L.entries,
+          L.map(([k, v]) => `${k}=${v}`),
+          function (a) {
+            console.log(a);
+            return a;
+          },
+          join("&")
+        );
+        log(queryStr2({ limit: 10, offset: 10, type: "notice" }));
+      </script>
+    </div>
+
+    <div>
+      <h1>find 와 take</h1>
+      <ul>
+        <li>find는 take로 결론을 내리는 함수</li>
+      </ul>
+      <script>
+        const users = [{ age: 32 }, { age: 31 }, { age: 37 }, { age: 28 }];
+
+        log(find((u) => u.age < 30)(users));
+
+        go(
+          users,
+          L.map((u) => u.age),
+          find((n) => n < 30),
+          log
+        );
+      </script>
+    </div>
+
+    <div>
+      <h1>L.flatter</h1>
+      <ul>
+        <li>[[1, 2], 3, 4, [5, 6], [7, 8, 9]]를 하나로 펼치는 함수</li>
+      </ul>
+      <script>
+        log([...[1, 2], 3, 4, ...[5, 6], ...[7, 8, 9]]);
+        let it = L.flatten([[1, 2], 3, 4, [5, 6], [7, 8, 9]]);
+        log([...it]);
+
+        let it2 = L.deepFlat([
+          [1, 2, [22, 23, 24, [33, 34, 35]]],
+          3,
+          4,
+          [5, 6],
+          [7, 8, 9],
+        ]);
+        log([...it2]);
+      </script>
+    </div>
+
+    <div>
+      <h1>L.flatMap, flatMap</h1>
+      <ul>
+        <li>map과 flatten을 동시에!</li>
+      </ul>
+      <script>
+        log(
+          [
+            [1, 2],
+            [3, 4],
+            [5, 6],
+            [7, 8, 9],
+          ].flatMap((a) => a.map((a) => a * a))
+        );
+
+        log(
+          flatten([
+            [1, 2],
+            [3, 4],
+            [5, 6],
+            [7, 8, 9],
+          ]).map((a) => a * a)
+        );
+
+        log(
+          // L.map에 인자가 두개가들어감
+          go(
+            L.flatMap(
+              map((a) => a * a),
+              [
+                [1, 2],
+                [3, 4],
+                [5, 6],
+                [7, 8, 9],
+              ]
+            ),
+            takeAll
+          )
+        );
+
+        log(flatMap(L.range, [1, 2, 3]));
+      </script>
+    </div>
+
+    <div>
+      <h1>2차원 배열 다루기</h1>
+      <ul>
+        <li>현기증 난다...</li>
+      </ul>
+      <script>
+        const arr = [
+          [1, 2],
+          [3, 4, 5],
+          [6, 7, 8],
+          [9, 10],
+        ];
+
+        go(
+          arr,
+          L.flatten,
+          L.filter((a) => a % 2),
+          L.map((a) => a * a),
+          take(4),
+          reduce((a, b) => a + b),
+          log
+        );
+      </script>
+    </div>
+  </body>
+</html>

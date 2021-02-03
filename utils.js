@@ -34,38 +34,8 @@ const reduce = curry((fn, acc, iter) => {
     const n = cur.value;
     acc = fn(acc, n);
   }
+
   return acc;
-});
-
-// iterable에 함수를 각각 다 실행하는것
-// 인자 두개는 나중에 따로 받을 수가 있게 되었다
-const map = curry((f, iter) => {
-  let res = [];
-  // for (const a of iter) {
-  //   res.push(f(a));
-  // }
-
-  iter = iter[Symbol.iterator]();
-  let cur;
-  while (!(cur = iter.next()).done) {
-    const a = cur.value;
-    res.push(f(a));
-  }
-  return res;
-});
-
-// 이터러블에 함수를 실행해서통과된것만 넣는것
-// 인자는 나중에 따로 받는다.
-const filter = curry((fn, iter) => {
-  let res = [];
-  // for (const a of iter) {
-  iter = iter[Symbol.iterator]();
-  let cur;
-  while (!(cur = iter.next()).done) {
-    const a = cur.value;
-    if (fn(a)) res.push(a);
-  }
-  return res;
 });
 
 const go = (...args) => {
@@ -110,6 +80,20 @@ const range = (l) => {
   return res;
 };
 
+const join = curry((sep = ",", iter) =>
+  reduce((a, b) => `${a}${sep}${b}`, iter)
+);
+
+const find = curry((f, iter) =>
+  go(
+    // iter
+    iter,
+    L.filter(f),
+    take(1),
+    ([a]) => a
+  )
+);
+
 // Lazy evaluation
 const L = {};
 L.range = function* (l) {
@@ -120,21 +104,85 @@ L.range = function* (l) {
 };
 
 L.map = curry(function* (f, iter) {
-  // for (const a of iter)
-  iter = iter[Symbol.iterator]();
-  let cur;
-  while (!(cur = iter.next()).done) {
-    const a = cur.value;
-    yield f(a);
-  }
+  for (const a of iter) yield f(a);
 });
 
 L.filter = curry(function* (f, iter) {
-  // for (const a of iter)
-  iter = iter[Symbol.iterator]();
-  let cur;
-  while (!(cur = iter.next()).done) {
-    const a = cur.value;
+  for (const a of iter) {
     if (f(a)) yield a;
   }
 });
+
+L.entries = function* (obj) {
+  for (const k in obj) yield [k, obj[k]];
+};
+
+const isIterable = (a) => a && a[Symbol.iterator];
+
+L.flatten = function* (iter) {
+  for (const a of iter) {
+    if (isIterable(a)) {
+      // for (const b of a) yield b;
+      // for (const b of a) yield b 과 yield *iterable은 같다
+      yield* a;
+    } else {
+      yield a;
+    }
+  }
+};
+
+L.deepFlat = function* f(iter) {
+  for (const a of iter) {
+    if (isIterable(a)) {
+      yield* f(a);
+    } else {
+      yield a;
+    }
+  }
+};
+
+const takeAll = take(Infinity);
+
+// 즉시 평가하는 flatten
+const flatten = pipe(L.flatten, takeAll);
+
+L.flatMap = curry(pipe(L.map, L.flatten));
+
+const flatMap = curry(pipe(L.map, flatten));
+
+// iterable에 함수를 각각 다 실행하는것
+// 인자 두개는 나중에 따로 받을 수가 있게 되었다
+// const map = curry((f, iter) => {
+//   let res = [];
+//   // for (const a of iter) {
+//   //   res.push(f(a));
+//   // }
+
+//   iter = iter[Symbol.iterator]();
+//   let cur;
+//   while (!(cur = iter.next()).done) {
+//     const a = cur.value;
+//     res.push(f(a));
+//   }
+//   return res;
+// });
+
+// map을 L.map으로 바꾸기
+const map = curry(pipe(L.map, takeAll));
+
+// 이터러블에 함수를 실행해서통과된것만 넣는것
+// 인자는 나중에 따로 받는다.
+// const filter = curry((fn, iter) => {
+//   let res = [];
+//   // for (const a of iter) {
+//   iter = iter[Symbol.iterator]();
+//   let cur;
+//   while (!(cur = iter.next()).done) {
+//     const a = cur.value;
+//     if (fn(a)) res.push(a);
+//   }
+//   return res;
+// });
+
+// filter를 L.filter로 바꾸기
+const filter = curry(pipe(L.filter, takeAll));
