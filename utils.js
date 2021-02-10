@@ -19,23 +19,37 @@ const curry = (f) => {
   };
 };
 
+// 어떤 인자가 promise면 풀어서 전달해주는 함수
+const convertPromise = (a, f) => (a instanceof Promise ? a.then(f) : f(a));
+
 // log(add(add(add(add(add(0, 1, 1), 2), 3), 4), 5)); 이렇게 되길 기대하는 함수
 // curry를 적용해서 실행할 함수를 만들었고, fn, acc, iter라는 인자를 나중에 넘겨줘야한다.
 const reduce = curry((fn, acc, iter) => {
   if (!iter) {
     iter = acc[Symbol.iterator]();
-    acc = iter.next().value;
+    acc = iter.next().value; // 여기서 첫번째인자가 promise로 들어오는 경우도 있다
   } else {
     iter = iter[Symbol.iterator]();
   }
   // for (const n of iter) {
-  let cur;
-  while (!(cur = iter.next()).done) {
-    const n = cur.value;
-    acc = fn(acc, n);
-  }
+  // let cur;
+  // while (!(cur = iter.next()).done) {
+  //   const n = cur.value;
+  //   acc = acc instanceof Promise ? acc.then((acc) => fn(acc, n)) : fn(acc, n); // 이부분이 promise가 되는 순간이 있다
+  //   // 중간에 promise가 들어오면 계속 연속적으로 promise체인에 걸린다
+  //   // 이렇게 되면 불필요한 load가 생길 수 있다
+  // }
 
-  return acc;
+  return convertPromise(acc, function recur(acc) {
+    let cur;
+    while (!(cur = iter.next()).done) {
+      const n = cur.value;
+      acc = fn(acc, n);
+      if (acc instanceof Promise) return acc.then(recur);
+    }
+    return acc;
+    // 이렇게 되면 promis가 아닌애들은 하나의 while문, 하나의 콜스택 내에서 동작한다
+  });
 });
 
 const go = (...args) => {

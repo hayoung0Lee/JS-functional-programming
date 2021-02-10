@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script>
+      const log = console.log;
+      const clear = console.clear;
+    </script>
+    <script src="../utils.js"></script>
+  </head>
+  <body>
+    <div>
+      <h1>자바스크립트에서 비동기 프로그래밍을 하는 방법</h1>
+      <ul>
+        <li>Callback, Promise, async/await</li>
+        <li>
+          Callback과 Promise의 가장큰 차이는 Promise는 비동기 상황을 일급값으로
+          처리한다는 것 Promise는 비동기 상황에 대해 대기/성공/실패라는 값을
+          만들어서 반환한다. 그래서 비동기 상황을 변수에 담거나 할 수 있다.
+        </li>
+        <li>일급</li>
+        <li>
+          일급 활용: Promise가 비동기 값을 일급(값)으로 다루는 성질을 활용하자!
+        </li>
+        <li>
+          Composition: f(g(x))
+          <br />
+          - 상황에 따라 안전하게 함수를 합성하기 위해 모나드라는 개념이있다. 즉,
+          모나드는 함수합성을 안전하게 하기 위한 도구
+          <br />
+          - 이런 구현체 중 비동기 상황을 처리하는 것이 promise
+        </li>
+        <li>
+          <a href="https://ko.javascript.info/promise-chaining"
+            >Promise 체이닝</a
+          >
+        </li>
+      </ul>
+      <script>
+        // callback 방식
+        // 비동기처리가 끝났을때 동작하는 함수를 인자로 넘겨준다
+        function add10(a, callback) {
+          setTimeout(() => callback(a + 10), 2000);
+        }
+
+        add10(5, (res) => log(res));
+
+        add10(5, (res) => {
+          add10(res, (res) => {
+            add10(res, log);
+          });
+        });
+
+        // Promise 방식
+        // 연산에 필요한 인자만 받는다
+        // add20은 Promise객체를 return
+        function add20(a) {
+          return new Promise((resolve) =>
+            setTimeout(() => resolve(a + 20), 2000)
+          );
+        }
+        let a = add20(5);
+        // log(a);
+        a.then((res) => log("res", res));
+
+        add20(5).then(log);
+
+        add20(5).then(add20).then(add20).then(log);
+
+        // promise 방식보다 callback 방식이 가독성이 좀떨어진다.
+        const delay3000 = (a) =>
+          new Promise((resolve) => setTimeout(() => resolve(a), 3000));
+
+        const go1 = (a, f) => (a instanceof Promise ? a.then(f) : f(a));
+        const add5 = (a) => a + 50;
+
+        // go를 통한 표시
+        // let r = go1(10, add5);
+        // log(r);
+
+        // let r2 = go1(delay3000(80), add5);
+        // r2.then(log);
+
+        go1(go1(10, add5), log);
+        go1(go1(delay3000(10), add5), (res) => log("here", res));
+
+        // 합성 관점에서의 promise와 모나드
+
+        const g = (a) => a + 1;
+        const f = (a) => a * a;
+
+        // 제대로 출력된다
+        log(f(g(1)));
+        // 잘못된 경우에도 출력된다
+        log(f(g()));
+
+        // 값이 들어올지 안들어올지 어떤 값일지 모를때도 함수 합성을 안전하게하게 해주는게 모나드
+        // log([1].map(g).map(f));
+        Array.of(1)
+          .map(g)
+          .map(f)
+          .forEach((r) => log(r));
+
+        // 이렇게 함수를 합성했을때의 이점은?
+        // 아무것도 없으면 아무일도 일어나지않는다
+        [1, 2, 3]
+          .map(g)
+          .map(f)
+          .forEach((r) => log(r));
+
+        // 그렇다면 promise는 어떠한 promise를 합성하는 값인가
+        // array는 map, promise는 then 으로 합성한다
+        Array.of(1)
+          .map(g)
+          .map(f)
+          .forEach((r) => log(r));
+        Promise.resolve(8)
+          .then(g)
+          .then(f)
+          .then((r) => log(r));
+
+        // Kleisli Composition
+        // 오류가 있을수 있을때의 함수 합성
+        // 외부 상황에 따라 값이 다르거나 그런 경우
+        // f . g
+        // f(g(x)) = f(g(x)) 이게 성립을 안할 수도 있다
+        // f(g(x)) = g(x) :g만 실행하고 오류가났을때 f를 합성해도 fg둘다 합성한거랑 값이 같다고 만들기
+        let users = [
+          { id: 1, name: "aa" },
+          { id: 2, name: "bb" },
+          { id: 3, name: "cc" },
+        ];
+
+        const getUserById = (id) =>
+          find((u) => u.id === id, users) || Promise.reject("없어요!");
+
+        const ff = ({ name }) => name;
+        const gg = getUserById;
+
+        const ffgg = (id) => ff(gg(id));
+        log("getuserbyid", ffgg(2));
+
+        users.pop();
+        users.pop();
+
+        // log("getuserbyid", ffgg(2)); // 앱을 실행하던 중에 상태가 바뀌어서 ffgg(2) != ffgg(2) 일수도 있다
+
+        // rejected 되면 then은 다 건너뛰고 catch로 이동
+        const ffgg2 = (id) =>
+          Promise.resolve(id)
+            .then(gg)
+            // .then(ff, (err) => console.error(err))
+            .then(ff)
+            .catch((a) => a);
+        // gg(2).then((res) => log("gg만 한거", res));
+        ffgg2(2).then((res) => log("ffgg2", res)); // gg(2)와 ffgg2(2)의 값이 같다
+
+        // go, pipe, reduce에서 비동기 제어
+        go(
+          Promise.resolve(1),
+          //
+          (a) => a + 10,
+          (a) => Promise.resolve(a + 100),
+          (a) => a + 1000,
+          (a) => log("go", a)
+        );
+
+        go(
+          Promise.resolve(1),
+          //
+          (a) => a + 10,
+          (a) => Promise.reject("go 에서 에러가 발생했다"),
+          (a) => a + 1000,
+          (a) => log("go reject한 경우", a)
+        ).catch((a) => console.log(a));
+
+        // Promise then의 중요한 규칙
+        // then 메서드를 통해서 결과를 꺼냈을때의 값은 반드시 promise가 아니다
+        // 꺼내면 그안의 값을 보여준다
+        Promise.resolve(Promise.resolve(Promise.resolve(1))).then((a) =>
+          log("resolve", a)
+        );
+
+        new Promise((resolve) =>
+          resolve(new Promise((resolve) => resolve(1)))
+        ).then((a) => {
+          // promise가 중첩되더라도 그안의 값을 보여준다
+          log("resolve", a);
+        });
+      </script>
+    </div>
+  </body>
+</html>
