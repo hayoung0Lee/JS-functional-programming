@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script>
+      const log = console.log;
+      const clear = console.clear;
+    </script>
+    <script src="../utils.js"></script>
+  </head>
+  <body>
+    <div>
+      <h1></h1>
+      <ul>
+        <li>지연 평가 + Promise - L.map, map, take</li>
+        <li>Klesili composition - L.filter, filter, nop, take</li>
+        <li>reduce에서 nop 지원</li>
+      </ul>
+      <script>
+        // go(
+        //   [Promise.resolve(1), Promise.resolve(2), Promise.resolve(3)],
+        //   //
+        //   L.map((a) => a + 10),
+        //   take(2),
+        //   log
+        // );
+
+        // go(
+        //   // [Promise.resolve(1), Promise.resolve(2), Promise.resolve(3)],
+        //   range(3),
+        //   L.map((a) => a + 10),
+        //   take(2),
+        //   log
+        // );
+
+        // go(
+        //   range(3),
+        //   // L.map((a) => Promise.resolve(a + 10)),
+        //   // takeAll,
+        //   map((a) => Promise.resolve(a + 10)),
+        //   log
+        // );
+
+        // // Klesili Composition - L.filter, filter, nop, take
+        // // 어떤 일이 일어나지않은것 처럼 처리하기 위해서 klesili 합성의 성질을 이용할 수 있다
+        // go(
+        //   [1, 2, 3, 4, 5, 6],
+        //   //
+        //   L.map((a) => Promise.resolve(a * a)),
+        //   L.filter((a) => a % 2),
+        //   L.map((a) => {
+        //     return Promise.resolve(a + 10);
+        //   }),
+        //   takeAll
+        //   // (res) => log("klesili", res)
+        // );
+        // // .catch((err) => console.log("error", err));
+
+        // const result = Promise.resolve("check").then((res) => res);
+        // // log("result", result);
+
+        // reduce 에서 nop 지원
+        // 지연성과 promise를 모두 지원해보자
+        const add = (a, b) => a + b;
+        // go(
+        //   [1, 2, 3, 4, 5, 6, 7, 8],
+        //   L.map((a) => {
+        //     log(a);
+        //     return new Promise((resolve) =>
+        //       setTimeout(() => resolve(a * a), 1000)
+        //     );
+        //   }),
+        //   L.filter((a) => {
+        //     log(a);
+        //     return new Promise((resolve) =>
+        //       setTimeout(() => resolve(a % 2), 1000)
+        //     );
+        //   }),
+        //   // L.filter((a) => Promise.resolve(a % 2)),
+        //   // take(3),
+        //   // reduce(add),
+        //   takeAll,
+        //   (a) => log("reduce 지원하기", a)
+        // );
+
+        // 이렇게 하면 지연 평가를 하기 때문에 필요하지 않은 비동기 호출은 하지 않게 된다.
+
+        const delay500 = (a, name) => {
+          console.log(`${name}: ${a}`);
+          return new Promise((resolve) => setTimeout(() => resolve(a), 500));
+        };
+        console.time("");
+        go(
+          [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+          C.map((a) => {
+            return delay500(a * a, "map1");
+          }),
+          L.filter((a) => {
+            return delay500(a % 2, "filter1");
+          }),
+          L.map((a) => {
+            // console.log("a", a);
+            return delay500(a * a, "map2");
+          }),
+          // (res) => {
+          //   // console.log("res", [...res]);
+          //   // 펼쳐지면서 여기서 이미 다 평가가 된다.
+          //   console.log("res", res);
+          //   return res;
+          // },
+          // reduce(add),
+          // takeAll,
+          take(2), // 병렬적으로 다 실행하고 그중에 2개를 가져온다
+          reduce(add), // reject된게 이미 찍혀버리기대문에 nop에러가 찍힌다
+          // reduce(add),
+          log,
+          (_) => console.timeEnd("")
+        );
+        // .catch((err) => console.log(err));
+        // 동시에 하니까 더 빨라진다.
+        // 특히 이런 동시적인 처리가 다른곳에서 이뤄지는거라면 c.reduce를 통해 속도를 개선할 수 있다.
+        // javascript가 로직은 싱글 스레드로 처리할뿐, 얼마든지 비동기적인 처리를 할 수 있다.
+        // nodejs를 예시로 들면, 싱글스레드로 nosql에 io를 요청하거나, 이미지 처리 등을 다른데다 부탁하거나 이런식이다.
+        // 즉, 다른데다가 뭘 보내놓고 시점을 다루는 것을 javaScript로 할 일이 많다
+
+        // 즉시 병렬적으로 평가하기 - C.map, C.filter
+        // 어떤건 병렬적으로 하고 다른건 동기적으로 처리하고 싶을수 있음
+
+        // C.map((a) => delay500(a * a), [1, 2, 3, 4]).then(log);
+
+        // C.filter((a) => delay500(a % 2), [1, 2, 3, 4]).then(log);
+      </script>
+    </div>
+  </body>
+</html>
