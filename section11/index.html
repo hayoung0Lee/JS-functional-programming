@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script>
+      const log = console.log;
+      const clear = console.clear;
+    </script>
+    <script src="../utils.js"></script>
+  </head>
+  <body>
+    <div>
+      <h1>async/await</h1>
+      <ul>
+        <li>JavaScript에서 비동기 상황을 더욱 동기처럼 다루기 위한 도구</li>
+        <li>비동기적으로 일어나는 일을 동기적인 문장으로 다루게 해줌</li>
+        <li>
+          결국에는 promise를 다루기 위해서는 promise를 잘 알아야한다. 왜냐하면
+          await하는건 결국 promise 객체이기 때문
+        </li>
+      </ul>
+      <script>
+        function delay(time) {
+          return new Promise((resolve) => setTimeout(() => resolve(), time));
+        }
+
+        async function delayIdentity(a) {
+          await delay(500);
+          return a;
+        }
+
+        async function f1() {
+          // await를 사용할 수 있게 됨
+          const a = await delayIdentity(10); // promise가 끝날때까지 기다리고 그 값을 풀어준다
+          const b = await delayIdentity(5);
+          // log(a + b);
+          return a + b;
+        }
+        // async 키워드가 붙으면 무조건 promise를 반환한다
+        f1().then(log);
+        go(f1(), log);
+
+        const pa = Promise.resolve(10);
+        (async () => {
+          log(await pa);
+        })();
+      </script>
+    </div>
+    <div>
+      <h1>
+        1. Array.prototype.map이 있는데 왜 FxJS의 map 함수가
+        필요한지?
+      </h1>
+      <ul>
+        <li>array.map은 비동기처리를 직접해주지않는다</li>
+      </ul>
+
+      <h1>
+        2. 이제 비동기는 async:await로 제어할 수 있는데 왜
+        파이프라인이 필요한지? async:await와 파이프라인을
+        같이 사용하기도 하는지?
+      </h1>
+      <ul>
+        <li>async/await 과 pipe가해결하는 문제가 다르다</li>
+        <li>async/await은 then then then... 이 되는걸 해결하기위한것</li>
+        <li>
+          pipe: 명령형 프로그래밍을 통하지 않고 함수를 합성하기 위함, 동기든
+          비동기든 함수 합성을 하기 위함, 읽기가 좋음, 그리고 수정이 쉬움
+        </li>
+        <li>pipe와 async/await을 같이 쓰기도 한단</li>
+      </ul>
+
+      <h1>
+        3. 동기 상황에서 에러 핸들링은 어떻게
+        해야하는지?
+      </h1>
+      <ul>
+        <li>안전하게 흘려보내거나, 에러를 그냥 뿜도록 냅둘 수 있음</li>
+        <li>error: https://stackify.com/node-js-error-handling/</li>
+        <li>
+          velog:
+          https://velog.io/@smooth97/-Learning-Javascript-%EC%98%88%EC%99%B8%EC%99%80-%EC%97%90%EB%9F%AC-%EC%B2%98%EB%A6%AC
+        </li>
+      </ul>
+
+      <h1>
+        4. 비동기 상황에서 에러 핸들링은 어떻게
+        해야하는지? 동기/비동기 에러 핸들링에서의
+        파이프라인의 이점은?
+      </h1>
+      <ul>
+        <li>Pipe를 잘 활용하자</li>
+      </ul>
+    </div>
+  </body>
+</html>
