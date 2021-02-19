@@ -71,8 +71,59 @@ for (const a of iterator) log(a);
 
 for (const a of document.querySelectorAll("*")) log(a);
 
-clear();
-
 // 전개연산자, 이터러블을 펼쳐준다
 const l = [1, 2, 3];
 log([...l, ...l, ...[9, 8, 7]]);
+
+clear();
+
+// 제너레이터: 이터레이터이자 이터러블을 생성하는 함수
+function* gen() {
+  yield 1;
+  yield 2;
+  yield 3;
+}
+
+for (const a of gen()) log(a);
+
+function* odds(l) {
+  let n = 1;
+  let c = 0;
+  while (c++ < l) {
+    yield n;
+    n += 2;
+  }
+}
+
+for (const a of odds(10)) log(a);
+
+function* infinity(i = 0) {
+  while (true) yield i++;
+}
+
+function* limit(l, iter) {
+  for (const a of iter) {
+    yield a;
+    if (a === l) return;
+  }
+}
+function* odds2(l, s) {
+  for (const a of limit(l, infinity(s))) {
+    if (a % 2) yield a;
+  }
+}
+
+for (const a of odds2(10, 5)) log(a);
+
+clear();
+
+// for of, 전개 연산자, 구조분해, 나머지 연산자
+
+log(...odds2(10, 1));
+log([...odds2(10, 1), ...odds2(20, 1)]);
+
+const [head, ...tail] = odds2(20, 1);
+log(head, tail);
+
+const [aa, bb, ...rest] = odds2(20, 1);
+log(aa, bb, rest);
